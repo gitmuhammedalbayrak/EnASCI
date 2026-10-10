@@ -1,0 +1,12 @@
+{
+  "name": "enasci-3d-engine",
+  "version": "1.0.0",
+  "description": "Pure CPU 3D ASCII Game Engine with Barycentric Rasterizer, Z-Buffer and Dynamic Shading",
+  "main": "dist/enasci.bundle.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["ascii", "3d", "game-engine", "software-renderer", "rasterizer", "z-buffer"],
+  "author": "Muhammed Albayrak",
+  "license": "MIT"
+}

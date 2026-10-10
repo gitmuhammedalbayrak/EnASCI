@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnASCI - 3D ASCII RPG & Game Engine</title>
+    <style>
+        :root {
+            --bg-dark: #0a0c10;
+            --panel-bg: rgba(14, 18, 25, 0.94);
+            --border-color: #242e3f;
+            --accent-green: #00ff88;
+            --accent-cyan: #00e5ff;
+            --accent-gold: #ffcc00;
+            --text-main: #e2e8f0;
+            --text-muted: #8492a6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar / Controls Panel */
+        #sidebar {
+            width: 320px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 18px;
+            gap: 14px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-icon {
+            font-family: monospace;
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--accent-green);
+            background: #0f241a;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #1a4e35;
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-cyan);
+            margin-bottom: 4px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        select, button {
+            background: #151b26;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus, button:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, #008855, #00ff88);
+            color: #06150d;
+            border: none;
+        }
+
+        button.gold {
+            background: linear-gradient(135deg, #996600, #ffcc00);
+            color: #201500;
+            border: none;
+        }
+
+        .stats-badge {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 10px;
+            background: #0e131d;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #1a2230;
+        }
+
+        .stats-badge span.value {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        /* Viewport Area */
+        #viewport-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, #111724 0%, #05070a 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            box-shadow: 0 12px 50px rgba(0, 0, 0, 0.85);
+            border-radius: 4px;
+            border: 1px solid #1f2838;
+        }
+
+        /* In-Game HUD: Interaction Prompt */
+        #interact-prompt {
+            position: absolute;
+            top: 25px;
+            background: rgba(15, 20, 30, 0.9);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.25);
+            display: none;
+            animation: pulsePrompt 1.2s infinite alternate;
+            z-index: 15;
+        }
+
+        @keyframes pulsePrompt {
+            0% { transform: scale(0.98); opacity: 0.85; }
+            100% { transform: scale(1.03); opacity: 1; }
+        }
+
+        /* ASCII Dialogue Box */
+        #dialogue-overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 82%;
+            max-width: 780px;
+            background: rgba(10, 14, 22, 0.96);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 16px 22px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 229, 255, 0.2);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            font-family: monospace;
+            z-index: 30;
+        }
+
+        .dialogue-speaker {
+            color: var(--accent-gold);
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dialogue-text {
+            color: #ffffff;
+            font-size: 15px;
+            line-height: 1.5;
+            min-height: 48px;
+        }
+
+        .dialogue-hint {
+            align-self: flex-end;
+            font-size: 11px;
+            color: var(--text-muted);
+            animation: blinkHint 1s infinite;
+        }
+
+        @keyframes blinkHint {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Main Menu Modal / Screen */
+        #menu-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 8, 12, 0.88);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            z-index: 40;
+            backdrop-filter: blur(6px);
+        }
+
+        .menu-logo {
+            font-family: monospace;
+            font-size: 18px;
+            color: var(--accent-green);
+            white-space: pre;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+            line-height: 1.2;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 260px;
+        }
+
+        .menu-buttons button {
+            padding: 12px;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* Controls Hint Overlay */
+        .controls-bar {
+            position: absolute;
+            bottom: 12px;
+            background: rgba(10, 14, 20, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .controls-bar kbd {
+            background: #202736;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <div class="brand">
+            <div class="brand-icon">&gt;_RPG</div>
+            <div>
+                <div class="brand-title">EnASCI Engine</div>
+                <div class="brand-sub">3D ASCII Adventure</div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="section-title">Durum & Performans</div>
+            <div class="stats-badge">
+                <span>FPS:</span>
+                <span class="value" id="stat-fps">60</span>
+            </div>
+            <div class="stats-badge">
+                <span>Oyun Durumu:</span>
+                <span class="value" id="stat-state" style="color: var(--accent-cyan);">OYUN (RPG)</span>
+            </div>
+            <div class="stats-badge">
+                <span>Grid Çözünürlüğü:</span>
+                <span class="value" id="stat-resolution">110 x 45</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="section-title">Ses & Müzik (8-Bit)</div>
+            <button id="btn-toggle-audio" class="gold">🎵 8-Bit Müzik: AÇ</button>
+        </div>
+
+        <div class="control-group">
+            <div class="section-title">Kamera & Sahne</div>
+            <label for="select-cam-mode">Kamera Açısı:</label>
+            <select id="select-cam-mode">
+                <option value="isometric">Top-Down / İzometrik (RPG Takip)</option>
+                <option value="orbit">Serbest Orbit (Fare ile 360°)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <div class="section-title">ASCII Görsel Ayarları</div>
+            <label for="select-mode">Render Modu:</label>
+            <select id="select-mode">
+                <option value="color">Renkli ASCII (Color Shaded)</option>
+                <option value="shaded">Monokrom Shaded ASCII</option>
+                <option value="wireframe">Tel Çerçeve (Wireframe + - / \)</option>
+                <option value="normals">Yüzey Normalleri</option>
+                <option value="depth">Z-Depth Derinlik</option>
+            </select>
+
+            <label for="select-theme">Retro Ekran Teması:</label>
+            <select id="select-theme">
+                <option value="fullcolor">RGB Tam Renkli</option>
+                <option value="matrix">Matrix Yeşili CRT</option>
+                <option value="amber">Amber Fosfor</option>
+                <option value="cyberpunk">Cyberpunk Neon</option>
+                <option value="monochrome">Klasik Monokrom</option>
+            </select>
+
+            <label for="select-ramp">ASCII Karakter Rampası:</label>
+            <select id="select-ramp">
+                <option value="standard">Standart ( .:-=+*#%@)</option>
+                <option value="detailed">Detaylı (70 Karakter)</option>
+                <option value="blocks">Blok Karakterler ( ░▒▓█)</option>
+                <option value="matrix">Matrix Kodları</option>
+            </select>
+        </div>
+
+        <div class="control-group" style="margin-top: auto;">
+            <button id="btn-menu" class="primary">📜 Ana Menüyü Aç (ESC)</button>
+            <button id="btn-copy-ascii">📋 Anlık ASCII Kopyala</button>
+        </div>
+    </div>
+
+    <!-- MAIN VIEWPORT -->
+    <div id="viewport-container">
+        <canvas id="ascii-canvas"></canvas>
+
+        <!-- INTERACTION PROMPT -->
+        <div id="interact-prompt">💬 [E] BİLGE BÜYÜCÜ MERLİN İLE KONUŞ</div>
+
+        <!-- DIALOGUE BOX -->
+        <div id="dialogue-overlay">
+            <div class="dialogue-speaker" id="dialogue-speaker">🧙‍♂️ [BİLGE BÜYÜCÜ MERLİN]</div>
+            <div class="dialogue-text" id="dialogue-text">...</div>
+            <div class="dialogue-hint">[SPACE / E: DEVAM ET]</div>
+        </div>
+
+        <!-- CONTROLS HINT -->
+        <div class="controls-bar">
+            Karakter: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>Ok Tuşları</kbd> Yürü | Etkileşim: <kbd>E</kbd> / <kbd>Space</kbd> Konuş | Menü: <kbd>ESC</kbd>
+        </div>
+
+        <!-- MAIN MENU MODAL -->
+        <div id="menu-overlay" style="display: none;">
+            <div class="menu-logo">
+ _______             ___     _______  _______ ___ 
+|   _   |.-----.----|   |   |   _   ||   _   |   |
+|   1___||     |  _ |   |   |   1___||.  1___|.  |
+|____   ||__|__|__  |___|   |____   ||.  |___|.  |
+|:  1   |         |:|       |:  1   ||:  1   |:  |
+|::.. . |         |:|       |::.. . ||::.. . |::.|
+`-------'         `-'       `-------'`-------`---'
+     3 D   A S C I I   A D V E N T U R E
+            </div>
+            <div class="menu-buttons">
+                <button id="btn-menu-start" class="primary">▶ OYUNA BAŞLA</button>
+                <button id="btn-menu-audio" class="gold">🎵 MÜZİK: KAPALI</button>
+                <button id="btn-menu-resume" style="display: none;">↩ OYUNA DÖN</button>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); font-family: monospace;">
+                [SPACE / ENTER]: Seç | [ESC]: Menüyü Kapat
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="dist/enasci.bundle.js"></script>
+    <script>
+        const {
+            Vec3, Vec2, Mat4, Mesh, Triangle, Vertex, Scene, Camera,
+            DirectionalLight, AsciiRenderer, ASCII_RAMPS, AsciiDisplay,
+            AsciiEngine, RetroAudio, DialogueSystem, GameWorld
+        } = window.EnASCI;
+
+        // 1. Initialize Engine & Canvas
+        const canvas = document.getElementById('ascii-canvas');
+        const engine = new AsciiEngine(canvas, {
+            width: 110,
+            height: 45,
+            fontSize: 13,
+            theme: "fullcolor"
+        });
+
+        // 2. Initialize 8-Bit Audio Synth & Dialogue System
+        const audio = new RetroAudio();
+        const dialogue = new DialogueSystem(audio);
+
+        // 3. Initialize Game World (Player, Trees, Waving Grass, NPC, Isometric Cam)
+        const world = new GameWorld(engine.scene, engine.camera);
+
+        // State Management: 'PLAYING', 'DIALOGUE', 'MENU'
+        let gameState = 'PLAYING';
+        let camMode = 'isometric'; // 'isometric' or 'orbit'
+
+        // Dialogue Story Scripts
+        const npcDialogueStory = {
+            speaker: "🧙‍♂️ BİLGE BÜYÜCÜ MERLİN",
+            messages: [
+                "Selamlar maceracı! EnASCI 3D dünyasına hoş geldin!",
+                "Fark ettin mi? Etrafındaki her şey saf ASCII karakterlerinden oluşuyor...",
+                "Rüzgarda salınan şu çimenler, gölgeler ve hatta çalan 8-bit ezgiler bile canlı bir matematik harikası!",
+                "WASD ile dolaşabilir, retro temaları deneyebilir veya kamerayı serbest bırakabilirsin.",
+                "Yolculuğun açık olsun genç ASCII şövalyesi!"
+            ]
+        };
+
+        // DOM Elements
+        const promptEl = document.getElementById('interact-prompt');
+        const dialogueOverlayEl = document.getElementById('dialogue-overlay');
+        const dialogueSpeakerEl = document.getElementById('dialogue-speaker');
+        const dialogueTextEl = document.getElementById('dialogue-text');
+        const menuOverlayEl = document.getElementById('menu-overlay');
+        const btnToggleAudio = document.getElementById('btn-toggle-audio');
+        const btnMenuAudio = document.getElementById('btn-menu-audio');
+
+        // Update UI dialogue hook
+        dialogue.onCompleteCallback = () => {
+            gameState = 'PLAYING';
+            dialogueOverlayEl.style.display = 'none';
+            document.getElementById('stat-state').textContent = 'OYUN (RPG)';
+        };
+
+        // 4. Game Update Loop
+        engine.onUpdate((dt) => {
+            // Document FPS
+            document.getElementById('stat-fps').textContent = engine.fps;
+
+            if (gameState === 'PLAYING') {
+                world.update(dt, engine.input);
+
+                // NPC proximity prompt
+                if (world.canTalkToNPC && !dialogue.isActive) {
+                    promptEl.style.display = 'block';
+                } else {
+                    promptEl.style.display = 'none';
+                }
+            } else if (gameState === 'DIALOGUE') {
+                // Update live text typing on screen
+                dialogueTextEl.textContent = dialogue.displayedText;
+                // Keep grass swaying even during dialogue!
+                world.time += dt;
+                const windWave = world.time * 3.4;
+                for (const grass of world.grassPatches) {
+                    const wind = Math.sin(windWave + grass.basePos.x * 0.6 + grass.basePos.z * 0.6 + grass.swayPhase);
+                    grass.rotation.z = wind * 0.32;
+                    grass.rotation.x = Math.cos(windWave + grass.swayPhase) * 0.16;
+                }
+            } else if (gameState === 'MENU') {
+                // Background gentle camera rotation in menu
+                engine.camera.orbit(dt * 0.35, 0);
+            }
+        });
+
+        // 5. Input Listeners (Interaction & Menu)
+        window.addEventListener('keydown', (e) => {
+            // Audio init on first user interaction (browser policy)
+            audio.initContext();
+
+            // Toggle / Advance Dialogue
+            if (e.code === 'KeyE' || e.code === 'Space') {
+                if (gameState === 'PLAYING' && world.canTalkToNPC) {
+                    openDialogue();
+                    e.preventDefault();
+                    return;
+                }
+                if (gameState === 'DIALOGUE') {
+                    dialogue.advance();
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // ESC -> Toggle Menu
+            if (e.code === 'Escape') {
+                toggleMenu();
+                e.preventDefault();
+            }
+        });
+
+        function openDialogue() {
+            gameState = 'DIALOGUE';
+            promptEl.style.display = 'none';
+            dialogueOverlayEl.style.display = 'flex';
+            dialogueSpeakerEl.textContent = npcDialogueStory.speaker;
+            document.getElementById('stat-state').textContent = 'DİYALOG';
+            dialogue.start(npcDialogueStory);
+        }
+
+        function toggleMenu() {
+            if (gameState === 'MENU') {
+                gameState = 'PLAYING';
+                menuOverlayEl.style.display = 'none';
+                document.getElementById('stat-state').textContent = 'OYUN (RPG)';
+                audio.playMenuBeep(true);
+            } else {
+                gameState = 'MENU';
+                promptEl.style.display = 'none';
+                dialogueOverlayEl.style.display = 'none';
+                menuOverlayEl.style.display = 'flex';
+                document.getElementById('btn-menu-resume').style.display = 'block';
+                document.getElementById('stat-state').textContent = 'ANA MENÜ';
+                audio.playMenuBeep(false);
+            }
+        }
+
+        // Audio Toggle handler
+        function toggleAudio() {
+            audio.initContext();
+            if (!audio.isPlaying) {
+                audio.startMusic();
+            } else {
+                audio.toggleMute();
+            }
+
+            const stateText = audio.isMuted || !audio.isPlaying ? 'KAPALI' : 'AÇIK';
+            btnToggleAudio.textContent = `🎵 8-Bit Müzik: ${stateText}`;
+            btnMenuAudio.textContent = `🎵 MÜZİK: ${stateText}`;
+        }
+
+        btnToggleAudio.addEventListener('click', toggleAudio);
+        btnMenuAudio.addEventListener('click', toggleAudio);
+
+        // Menu buttons
+        document.getElementById('btn-menu').addEventListener('click', toggleMenu);
+        document.getElementById('btn-menu-start').addEventListener('click', () => {
+            toggleMenu();
+            if (!audio.isPlaying) toggleAudio();
+        });
+        document.getElementById('btn-menu-resume').addEventListener('click', toggleMenu);
+
+        // Camera mode change
+        document.getElementById('select-cam-mode').addEventListener('change', (e) => {
+            camMode = e.target.value;
+            if (camMode === 'isometric') {
+                engine.camera.position = world.player.pos.add(world.camOffset);
+                engine.camera.target = world.player.pos.clone();
+            }
+        });
+
+        // Theme and Render Mode selectors
+        document.getElementById('select-mode').addEventListener('change', (e) => {
+            engine.renderer.config.renderMode = e.target.value;
+        });
+
+        document.getElementById('select-theme').addEventListener('change', (e) => {
+            engine.display.theme = e.target.value;
+        });
+
+        document.getElementById('select-ramp').addEventListener('change', (e) => {
+            engine.renderer.config.rampName = e.target.value;
+        });
+
+        document.getElementById('btn-copy-ascii').addEventListener('click', () => {
+            const asciiText = engine.display.getPlainText(engine.renderer.buffer);
+            navigator.clipboard.writeText(asciiText).then(() => {
+                alert('Mevcut ASCII 3D karesi panoya kopyalandı!');
+            });
+        });
+
+        // Responsive Resize
+        function handleResize() {
+            const container = document.getElementById('viewport-container');
+            const availableW = container.clientWidth - 40;
+            const availableH = container.clientHeight - 40;
+            const charW = engine.display.charWidth || 8;
+            const charH = engine.display.charHeight || 15;
+
+            let cols = Math.floor(availableW / charW);
+            let rows = Math.floor(availableH / charH);
+            cols = Math.max(50, Math.min(160, cols));
+            rows = Math.max(30, Math.min(75, rows));
+
+            engine.width = cols;
+            engine.height = rows;
+            engine.renderer.setSize(cols, rows);
+            engine.display.resizeToBuffer(cols, rows);
+            engine.camera.aspect = (cols / rows) * 0.55;
+            document.getElementById('stat-resolution').textContent = `${cols} x ${rows}`;
+        }
+
+        window.addEventListener('resize', handleResize);
+        setTimeout(handleResize, 100);
+
+        // Start Engine
+        engine.start();
+    </script>
+</body>
+</html>
