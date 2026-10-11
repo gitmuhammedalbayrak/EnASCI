@@ -1,6 +1,19 @@
 # 🎮 EnASCI - 3D ASCII Game Engine & Retro RPG
 
-Sıfır harici kütüphane bağımlılığına sahip, saf CPU üzerinde çalışan, **Barycentric Z-Buffer Software Rasterizer** mimarisiyle geliştirilmiş modüler **3D ASCII Oyun Motoru ve Retro RPG Macera Sahnesi**.
+[![GitHub Pages Demo](https://img.shields.io/badge/Canl%C4%B1_Demo-GitHub_Pages-brightgreen?style=for-the-badge&logo=github)](https://gitmuhammedalbayrak.github.io/EnASCI/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Pure CPU](https://img.shields.io/badge/Yaz%C4%B1l%C4%B1msal_Rasterizer-S%C4%B1f%C4%B1r_Ba%C4%9F%C4%B1ml%C4%B1l%C4%B1k-orange?style=for-the-badge)](#)
+
+[🇹🇷 Türkçe Dokümantasyon](README.md) | [🇬🇧 English Documentation](README.en.md)
+
+---
+
+## 🕹️ Canlı Tarayıcı Demosu
+
+Kurulum yapmadan doğrudan tarayıcınızda oynayın:  
+👉 **[https://gitmuhammedalbayrak.github.io/EnASCI/](https://gitmuhammedalbayrak.github.io/EnASCI/)**
+
+---
 
 Tarayıcı ortamında (HTML5 Monospace Canvas) 60 FPS hızında çalışan bu motor; tüm vektör/matris matematiği, 3D rasterizasyonu, izometrik kamera projeksiyonu, rüzgarda salınan çimen fiziği, daktilo efektli diyalog sistemi ve 8-bit Web Audio chiptune sentezleyicisini sıfırdan içerir. Mimarisi gelecekte **C, C++ veya Rust (ncurses / Windows Console API)** gibi yerel (native) sistem seviyelerine doğrudan taşınabilecek şekilde saf standartlarda yazılmıştır.
 
